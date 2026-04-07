@@ -17,20 +17,37 @@ Replace this paragraph with your own summary of what your version does.
 
 ## How The System Works
 
-Explain your design in plain language.
+Real-world recommenders like Spotify match songs to users by turning taste into numbers — comparing audio features like energy and mood against what a user prefers, then ranking by score. This simulation does the same thing on a small scale.
 
-Some prompts to answer:
+Each song has a `genre`, `mood`, `energy`, and `acousticness`. Each user profile stores a preferred genre, mood, target energy level, and whether they like acoustic music.
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+### Algorithm Recipe
 
-You can include a simple diagram or bullet list if helpful.
+Every song is scored out of **100 points** using four rules:
 
+| Rule | Points | How It Works |
+|---|---|---|
+| Genre match | 35 | Exact match = full 35. Same sonic cluster (e.g. lofi ≈ ambient ≈ jazz) = 17.5. No relation = 0. |
+| Mood match | 35 | Scored on a calm-to-intense scale. Closer moods earn more points — "focused" is near "chill", "intense" is far from it. |
+| Energy proximity | 20 | `(1 - abs(song.energy - target_energy)) × 20` — a continuous score, not all-or-nothing. |
+| Acoustic alignment | 10 | If `likes_acoustic` is True: `song.acousticness × 10`. If False: `(1 - song.acousticness) × 10`. |
+
+**In plain terms:** a song that matches your genre and mood gets up to 70 points before energy or acoustics are even considered. Energy and acoustic feel then fine-tune the ranking among similar-sounding options.
+
+All songs are scored, sorted highest to lowest, and the top K are returned — each with a plain-language explanation of which rules fired.
+
+### Potential Biases to Watch For
+
+- **Genre dominates.** Genre and mood together make up 70% of the score. A song that perfectly matches the user's energy and acoustic taste but differs in genre will almost always rank below a genre match — even if it would sound great to that listener.
+- **Rare genres are disadvantaged.** Genres like `metal`, `classical`, and `blues` appear only once in the catalog. A user who prefers those genres has fewer candidates for partial credit, so their top results may feel less diverse.
+- **Acoustic preference is binary.** `likes_acoustic` is True or False — there is no "sometimes" or "depends on my mood." A user who likes both acoustic and electric tracks will always be steered one way.
+- **No listening history.** Every recommendation is based purely on stated preferences, not on what the user has actually skipped or replayed. Real systems update weights based on behavior; this one does not.
+
+![alt text](image.png)
 ---
 
+### Algorithm Output
+![alt text](image-1.png)
 ## Getting Started
 
 ### Setup
