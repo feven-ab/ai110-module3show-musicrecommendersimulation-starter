@@ -1,23 +1,14 @@
-# 🎵 Music Recommender Simulation
+# Music Recommender Simulation
 
 ## Project Summary
 
-In this project you will build and explain a small music recommender system.
-
-Your goal is to:
-
-- Represent songs and a user "taste profile" as data
-- Design a scoring rule that turns that data into recommendations
-- Evaluate what your system gets right and wrong
-- Reflect on how this mirrors real world AI recommenders
-
-Replace this paragraph with your own summary of what your version does.
+This project is a small music recommender that scores songs based on a user's taste profile. My version uses genre, mood, energy, and acousticness to rank songs from a small catalog and return the best matches with short explanations. I wanted it to be simple enough to understand clearly, but still realistic enough to show how recommendation systems can shape what people keep seeing.
 
 ---
 
-## How The System Works
+## How the System Works
 
-Real-world recommenders like Spotify match songs to users by turning taste into numbers — comparing audio features like energy and mood against what a user prefers, then ranking by score. This simulation does the same thing on a small scale.
+Real-world recommenders like Spotify match songs to users by turning taste into numbers, comparing audio features like energy and mood against what a user prefers, then ranking by score. This simulation does the same thing on a small scale.
 
 Each song has a `genre`, `mood`, `energy`, and `acousticness`. Each user profile stores a preferred genre, mood, target energy level, and whether they like acoustic music.
 
@@ -26,54 +17,58 @@ Each song has a `genre`, `mood`, `energy`, and `acousticness`. Each user profile
 Every song is scored out of **100 points** using four rules:
 
 | Rule | Points | How It Works |
-|---|---|---|
-| Genre match | 35 | Exact match = full 35. Same sonic cluster (e.g. lofi ≈ ambient ≈ jazz) = 17.5. No relation = 0. |
-| Mood match | 35 | Scored on a calm-to-intense scale. Closer moods earn more points — "focused" is near "chill", "intense" is far from it. |
-| Energy proximity | 20 | `(1 - abs(song.energy - target_energy)) × 20` — a continuous score, not all-or-nothing. |
-| Acoustic alignment | 10 | If `likes_acoustic` is True: `song.acousticness × 10`. If False: `(1 - song.acousticness) × 10`. |
+| --- | --- | --- |
+| Genre match | 35 | Exact match = full 35. Same sonic cluster (for example `lofi`, `ambient`, and `jazz`) = 17.5. No relation = 0. |
+| Mood match | 35 | Scored on a calm-to-intense scale. Closer moods earn more points; `focused` is near `chill`, while `intense` is far from it. |
+| Energy proximity | 20 | `(1 - abs(song.energy - target_energy)) * 20` for a continuous score, not all-or-nothing. |
+| Acoustic alignment | 10 | If `likes_acoustic` is `True`: `song.acousticness * 10`. If `False`: `(1 - song.acousticness) * 10`. |
 
 **In plain terms:** a song that matches your genre and mood gets up to 70 points before energy or acoustics are even considered. Energy and acoustic feel then fine-tune the ranking among similar-sounding options.
 
-All songs are scored, sorted highest to lowest, and the top K are returned — each with a plain-language explanation of which rules fired.
+All songs are scored, sorted highest to lowest, and the top `k` are returned with a plain-language explanation of which rules fired.
 
 ### Potential Biases to Watch For
 
-- **Genre dominates.** Genre and mood together make up 70% of the score. A song that perfectly matches the user's energy and acoustic taste but differs in genre will almost always rank below a genre match — even if it would sound great to that listener.
+- **Genre dominates.** Genre and mood together make up 70% of the score. A song that perfectly matches the user's energy and acoustic taste but differs in genre will almost always rank below a genre match, even if it would sound great to that listener.
 - **Rare genres are disadvantaged.** Genres like `metal`, `classical`, and `blues` appear only once in the catalog. A user who prefers those genres has fewer candidates for partial credit, so their top results may feel less diverse.
-- **Acoustic preference is binary.** `likes_acoustic` is True or False — there is no "sometimes" or "depends on my mood." A user who likes both acoustic and electric tracks will always be steered one way.
+- **Acoustic preference is binary.** `likes_acoustic` is `True` or `False`; there is no "sometimes" or "depends on my mood." A user who likes both acoustic and electric tracks will always be steered one way.
 - **No listening history.** Every recommendation is based purely on stated preferences, not on what the user has actually skipped or replayed. Real systems update weights based on behavior; this one does not.
 
-![alt text](image.png)
----
+![Algorithm overview](image.png)
 
 ### Algorithm Output
-![alt text](image-1.png)
+
+![Algorithm output](image-1.png)
+
+---
+
 ## Getting Started
 
 ### Setup
 
-1. Create a virtual environment (optional but recommended):
+1. Create a virtual environment if you want to keep dependencies separate:
 
    ```bash
    python -m venv .venv
    source .venv/bin/activate      # Mac or Linux
    .venv\Scripts\activate         # Windows
+   ```
 
-2. Install dependencies
+2. Install dependencies:
 
-```bash
-pip install -r requirements.txt
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 3. Run the app:
 
-```bash
-python -m src.main
-```
+   ```bash
+   python -m src.main
+   ```
 
 ### Running Tests
 
-Run the starter tests with:
+Run the tests with:
 
 ```bash
 pytest
@@ -85,144 +80,25 @@ You can add more tests in `tests/test_recommender.py`.
 
 ## Experiments You Tried
 
-Use this section to document the experiments you ran. For example:
+I tested the recommender with several different user profiles to see how the rankings changed.
 
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+- A Calm Lofi profile gave strong results like `Library Rain`, `Midnight Coding`, and `Focus Flow`. That made sense because those songs matched the low energy, chill mood, and acoustic preference closely.
+- A Happy Pop profile put `Sunrise City` first, which felt right, but it also ranked `Gym Hero` very high. That showed me the model can over-reward the `pop` label even when the overall feeling is more intense than the user probably wanted.
+- A High-Energy EDM profile correctly pushed `Drop Zone` to the top. After that, it started mixing in other high-energy songs from nearby styles, which showed me the model is strongest when there is a direct match in the catalog.
+- An Acoustic Sad profile had fewer perfect matches, so it pulled songs from `folk`, `classical`, `blues`, and `ambient`. That helped me see that users with more specific or less represented tastes get a thinner set of recommendations.
 
 ---
 
 ## Limitations and Risks
 
-Summarize some limitations of your recommender.
-
-Examples:
-
-- It only works on a tiny catalog
-- It does not understand lyrics or language
-- It might over favor one genre or mood
-
-You will go deeper on this in your model card.
+This recommender only works on a very small catalog, so the results can feel repetitive quickly. It also does not understand lyrics, artist history, or listening context, so it only sees a few simple features. Another limitation is that genre and mood have so much weight that they can overpower more subtle preferences. That is why songs like `Gym Hero` can keep showing up for users who just want softer happy pop.
 
 ---
 
 ## Reflection
 
-Read and complete `model_card.md`:
+Read and complete [**Model Card**](model_card.md).
 
-[**Model Card**](model_card.md)
+This project helped me understand how recommenders turn taste into numbers and then use those numbers to rank choices. Before building it, recommendation systems felt more mysterious to me. After working on this, I could see that even a simple point system can create results that feel personal if it consistently matches a few strong signals.
 
-Write 1 to 2 paragraphs here about what you learned:
-
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
-
-
----
-
-## 7. `model_card_template.md`
-
-Combines reflection and model card framing from the Module 3 guidance. :contentReference[oaicite:2]{index=2}  
-
-```markdown
-# 🎧 Model Card - Music Recommender Simulation
-
-## 1. Model Name
-
-Give your recommender a name, for example:
-
-> VibeFinder 1.0
-
----
-
-## 2. Intended Use
-
-- What is this system trying to do
-- Who is it for
-
-Example:
-
-> This model suggests 3 to 5 songs from a small catalog based on a user's preferred genre, mood, and energy level. It is for classroom exploration only, not for real users.
-
----
-
-## 3. How It Works (Short Explanation)
-
-Describe your scoring logic in plain language.
-
-- What features of each song does it consider
-- What information about the user does it use
-- How does it turn those into a number
-
-Try to avoid code in this section, treat it like an explanation to a non programmer.
-
----
-
-## 4. Data
-
-Describe your dataset.
-
-- How many songs are in `data/songs.csv`
-- Did you add or remove any songs
-- What kinds of genres or moods are represented
-- Whose taste does this data mostly reflect
-
----
-
-## 5. Strengths
-
-Where does your recommender work well
-
-You can think about:
-- Situations where the top results "felt right"
-- Particular user profiles it served well
-- Simplicity or transparency benefits
-
----
-
-## 6. Limitations and Bias
-
-Where does your recommender struggle
-
-Some prompts:
-- Does it ignore some genres or moods
-- Does it treat all users as if they have the same taste shape
-- Is it biased toward high energy or one genre by default
-- How could this be unfair if used in a real product
-
----
-
-## 7. Evaluation
-
-How did you check your system
-
-Examples:
-- You tried multiple user profiles and wrote down whether the results matched your expectations
-- You compared your simulation to what a real app like Spotify or YouTube tends to recommend
-- You wrote tests for your scoring logic
-
-You do not need a numeric metric, but if you used one, explain what it measures.
-
----
-
-## 8. Future Work
-
-If you had more time, how would you improve this recommender
-
-Examples:
-
-- Add support for multiple users and "group vibe" recommendations
-- Balance diversity of songs instead of always picking the closest match
-- Use more features, like tempo ranges or lyric themes
-
----
-
-## 9. Personal Reflection
-
-A few sentences about what you learned:
-
-- What surprised you about how your system behaved
-- How did building this change how you think about real music recommenders
-- Where do you think human judgment still matters, even if the model seems "smart"
-
+It also made bias feel more real. The system is not trying to be unfair, but the weights and the dataset still push some users into narrower results than others. If a genre has only one song in the catalog, or if the scoring rewards broad labels too much, some listeners get weaker recommendations without the system ever saying that directly.
